@@ -1,0 +1,1935 @@
+```html
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ລະບົບຈັດການລາຍການຕິດໜີ້</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Lao:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      font-family: "Noto Sans Lao", "Phetsarath OT", "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+
+    /* Custom subtle scrollbar for horizontal menu on compact phones */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .animate-pop {
+      animation: popIn 0.2s ease-out forwards;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printSlipArea,
+      #printSlipArea * {
+        visibility: visible;
+      }
+      #printSlipArea {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-blue-100">
+  <!-- Toast Notification Container (Never uses alert() or confirm()) -->
+  <div id="toastStack" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100vw-2rem)] pointer-events-none"></div>
+
+  <div class="max-w-6xl mx-auto px-3 py-4 sm:px-6 sm:py-6">
+    <!-- Top Header & Overall Summary -->
+    <header class="bg-gradient-to-br from-slate-900 via-blue-950 to-blue-800 text-white rounded-3xl p-5 sm:p-7 shadow-xl mb-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/15 px-3 py-1 rounded-full text-xs font-semibold text-blue-100 mb-2">
+            <span>📒 ລະບົບແຍກໝວດການຕິດໜີ້ &amp; ອອກໃບທ້ວງໜີ້</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">ລະບົບຈັດການລາຍການຕິດໜີ້</h1>
+          <p class="text-xs sm:text-sm text-blue-100/90 mt-1">
+            ແຍກເຂົ້າໃຊ້ງານໄດ້ 5 ເມນູ • ຮອງຮັບ ຕິດເພີ່ມ, ຈ່າຍສ່ວນໜຶ່ງ, ຈ່າຍໝົດ, ອາຍຸແຈ້ງເຕືອນ ແລະ ສ້າງໃບທ້ວງໜີ້
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 lg:min-w-[380px]">
+          <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3">
+            <div class="text-[11px] text-blue-200 font-medium">ຍອດຄ້າງທັງໝົດ</div>
+            <div id="globalUnpaidAmount" class="text-base sm:text-lg font-extrabold text-amber-300 mt-0.5">0 ກີບ</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3">
+            <div class="text-[11px] text-blue-200 font-medium">ຄົບກຳນົດ / ເກີນກຳນົດ</div>
+            <div id="globalOverdueCount" class="text-base sm:text-lg font-extrabold text-rose-300 mt-0.5">0 ລາຍການ</div>
+          </div>
+          <div class="col-span-2 sm:col-span-1 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3 flex sm:flex-col items-center sm:items-start justify-between">
+            <span class="text-[11px] text-blue-200 font-medium">ຂໍ້ມູນ</span>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <button
+                type="button"
+                id="btnLoadSamples"
+                class="text-[11px] font-bold bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                title="ໂຫຼດຂໍ້ມູນຕົວຢ່າງຄືນ"
+              >
+                ↻ ຕົວຢ່າງ
+              </button>
+              <button
+                type="button"
+                id="btnExportJson"
+                class="text-[11px] font-bold bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                title="ສຳຮອງເປັນໄຟລ໌ JSON"
+              >
+                ⬇ JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 5 Main Clickable Menus -->
+    <nav aria-label="ເມນູຫຼັກ 5 ໝວດ" class="mb-5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5" id="mainMenuBar">
+        <!-- Menu 1 -->
+        <button
+          type="button"
+          data-menu="lottery"
+          class="menu-tab group text-left rounded-2xl p-3.5 sm:p-4 border transition cursor-pointer bg-white border-slate-200 hover:border-blue-400 shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700">ເມນູ 1</span>
+            <span id="badge-lottery" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 ກີບ</span>
+          </div>
+          <div class="font-extrabold text-sm sm:text-base text-slate-900 mt-2">🎲 ຕິດໜີ້ເລກ</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ງວດ / 2-6 ໂຕ / ອາຍຸເຕືອນ</div>
+        </button>
+
+        <!-- Menu 2 -->
+        <button
+          type="button"
+          data-menu="topup"
+          class="menu-tab group text-left rounded-2xl p-3.5 sm:p-4 border transition cursor-pointer bg-white border-slate-200 hover:border-blue-400 shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-sky-100 text-sky-700">ເມນູ 2</span>
+            <span id="badge-topup" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 ກີບ</span>
+          </div>
+          <div class="font-extrabold text-sm sm:text-base text-slate-900 mt-2">📱 ຕິດໜີ້ເຕີມບັດ</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ເບີໂທ / ເຄືອຂ່າຍ / ແພັກເກັດ</div>
+        </button>
+
+        <!-- Menu 3 -->
+        <button
+          type="button"
+          data-menu="game"
+          class="menu-tab group text-left rounded-2xl p-3.5 sm:p-4 border transition cursor-pointer bg-white border-slate-200 hover:border-blue-400 shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-purple-100 text-purple-700">ເມນູ 3</span>
+            <span id="badge-game" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 ກີບ</span>
+          </div>
+          <div class="font-extrabold text-sm sm:text-base text-slate-900 mt-2">🎮 ຕິດໜີ້ເຕີມເກມ</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ຊື່ເກມ / UID / ເພັດ-ແພັກ</div>
+        </button>
+
+        <!-- Menu 4 -->
+        <button
+          type="button"
+          data-menu="transfer"
+          class="menu-tab group text-left rounded-2xl p-3.5 sm:p-4 border transition cursor-pointer bg-white border-slate-200 hover:border-blue-400 shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-teal-100 text-teal-700">ເມນູ 4</span>
+            <span id="badge-transfer" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 ກີບ</span>
+          </div>
+          <div class="font-extrabold text-sm sm:text-base text-slate-900 mt-2">💸 ຕິດໜີ້ໂອນ-ຖອນ</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ໂອນ/ຖອນ / ທະນາຄານ/ບັນຊີ</div>
+        </button>
+
+        <!-- Menu 5 -->
+        <button
+          type="button"
+          data-menu="invoice"
+          class="menu-tab col-span-2 sm:col-span-1 group text-left rounded-2xl p-3.5 sm:p-4 border transition cursor-pointer bg-white border-slate-200 hover:border-amber-500 shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800">ເມນູ 5</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">ພິມ / ກັອບ</span>
+          </div>
+          <div class="font-extrabold text-sm sm:text-base text-slate-900 mt-2">🧾 ສ້າງໃບທ້ວງໜີ້</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ລວມຍອດທວງ &amp; ກັອບສົ່ງລູກຄ້າ</div>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Dynamic Workspace Area (Dedicated View for Menus 1-4 OR Menu 5 Invoice Builder) -->
+    <main id="workspaceContainer" class="animate-pop"></main>
+
+    <!-- Footer Backup / Import Bar -->
+    <footer class="mt-6 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+      <div>
+        💾 ຂໍ້ມູນຖືກບັນທຶກອັດຕະໂນມັດໃນ Browser (<span class="font-semibold text-slate-700">localStorage</span>) ຂອງອຸປະກອນນີ້
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          id="btnImportJsonTrigger"
+          class="px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold transition cursor-pointer"
+        >
+          ⬆ ນຳເຂົ້າ JSON
+        </button>
+        <input type="file" id="importJsonInput" accept=".json,application/json" class="hidden" />
+        <button
+          type="button"
+          id="btnClearSettled"
+          class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold transition cursor-pointer"
+        >
+          🧹 ລ້າງລາຍການທີ່ຈ່າຍໝົດແລ້ວ
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: ຕິດເພີ່ມ (Add Additional Debt to Existing Entry) -->
+  <div id="addMoreModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="addMoreBackdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>
+    <div class="relative z-10 bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-5 sm:p-6 animate-pop">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">➕ ຕິດເພີ່ມຍອດໜີ້</span>
+          <h3 id="addMoreCustomerTitle" class="text-lg font-extrabold text-slate-900 mt-1">ຊື່ລູກຄ້າ</h3>
+          <p id="addMoreCurrentBalance" class="text-xs text-slate-500 mt-0.5">ຍອດຄ້າງປັດຈຸບັນ: 0 ກີບ</p>
+        </div>
+        <button type="button" id="closeAddMoreBtn" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <form id="addMoreForm" class="space-y-3.5">
+        <input type="hidden" id="addMoreEntryId" />
+        <div>
+          <label for="addMoreAmount" class="block text-xs font-bold text-slate-700 mb-1">ຈຳນວນທີ່ຕິດເພີ່ມ (ກີບ) *</label>
+          <input type="number" id="addMoreAmount" min="1" step="any" required placeholder="ເຊັ່ນ: 30000" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:border-blue-600" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label for="addMoreDate" class="block text-xs font-bold text-slate-700 mb-1">ວັນທີຕິດເພີ່ມ</label>
+            <input type="date" id="addMoreDate" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-600" />
+          </div>
+          <div>
+            <label for="addMoreTime" class="block text-xs font-bold text-slate-700 mb-1">ເວລາ</label>
+            <input type="time" id="addMoreTime" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-600" />
+          </div>
+        </div>
+
+        <div>
+          <label for="addMoreNote" class="block text-xs font-bold text-slate-700 mb-1">ລາຍລະອຽດການຕິດເພີ່ມ</label>
+          <input type="text" id="addMoreNote" placeholder="ເຊັ່ນ: ເພີ່ມເລກ 79 / ເຕີມເພີ່ມ 20,000 / ໂອນເພີ່ມ" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="cancelAddMoreBtn" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold cursor-pointer">ຍົກເລີກ</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow cursor-pointer">✓ ຢືນຢັນຕິດເພີ່ມ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: ຈ່າຍສ່ວນໜຶ່ງ (Partial Payment) -->
+  <div id="partialPayModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="partialPayBackdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>
+    <div class="relative z-10 bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-5 sm:p-6 animate-pop">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">💵 ຈ່າຍສ່ວນໜຶ່ງ</span>
+          <h3 id="partialCustomerTitle" class="text-lg font-extrabold text-slate-900 mt-1">ຊື່ລູກຄ້າ</h3>
+          <p id="partialRemainingLabel" class="text-xs text-rose-600 font-bold mt-0.5">ຍອດຄ້າງເຫຼືອ: 0 ກີບ</p>
+        </div>
+        <button type="button" id="closePartialBtn" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <form id="partialPayForm" class="space-y-3.5">
+        <input type="hidden" id="partialEntryId" />
+        <div>
+          <label for="partialAmount" class="block text-xs font-bold text-slate-700 mb-1">ຈຳນວນເງິນທີ່ຈ່າຍສ່ວນໜຶ່ງ (ກີບ) *</label>
+          <input type="number" id="partialAmount" min="1" step="any" required placeholder="ເຊັ່ນ: 20000" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:border-amber-600" />
+          <div class="flex flex-wrap gap-1.5 mt-2" id="quickPartialButtons">
+            <!-- Populated dynamically with quick percentages/amounts -->
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label for="partialDate" class="block text-xs font-bold text-slate-700 mb-1">ວັນທີຈ່າຍ</label>
+            <input type="date" id="partialDate" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-amber-600" />
+          </div>
+          <div>
+            <label for="partialTime" class="block text-xs font-bold text-slate-700 mb-1">ເວລາ</label>
+            <input type="time" id="partialTime" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-amber-600" />
+          </div>
+        </div>
+
+        <div>
+          <label for="partialNote" class="block text-xs font-bold text-slate-700 mb-1">ໝາຍເຫດການຈ່າຍ (ຖ້າມີ)</label>
+          <input type="text" id="partialNote" placeholder="ເຊັ່ນ: ໂອນເຂົ້າ BCEL ແລ້ວບາງສ່ວນ / ຈ່າຍສົດ" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-600" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="cancelPartialBtn" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold cursor-pointer">ຍົກເລີກ</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold shadow cursor-pointer">✓ ບັນທຶກການຈ່າຍ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: ປະຫວັດລາຍການ & ການເຄື່ອນໄຫວ (Entry Ledger History) -->
+  <div id="historyModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="historyBackdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px]"></div>
+    <div class="relative z-10 bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-5 sm:p-6 animate-pop max-h-[85vh] flex flex-col">
+      <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-200">
+        <div>
+          <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">🕒 ປະຫວັດຕິດເພີ່ມ &amp; ການຈ່າຍ</span>
+          <h3 id="historyCustomerTitle" class="text-lg font-extrabold text-slate-900 mt-1">ຊື່ລູກຄ້າ</h3>
+          <p id="historySummarySub" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button type="button" id="closeHistoryBtn" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="historyTimeline" class="overflow-y-auto py-4 space-y-2.5 flex-1"></div>
+      <div class="pt-3 border-t border-slate-200 flex justify-end">
+        <button type="button" id="closeHistoryBottomBtn" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">ປິດໜ້າຕ່າງ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. CONFIGURATION & CONSTANTS
+    // =========================================================================
+    const DATA_STORAGE_KEY = "lao_debt_manager_v3_items";
+    const INVOICE_PREF_KEY = "lao_debt_manager_v3_invoice_pref";
+
+    const MENU_CONFIG = {
+      lottery: {
+        id: "lottery",
+        numberLabel: "ເມນູ 1",
+        title: "ຕິດໜີ້ເລກ",
+        badgeId: "badge-lottery",
+        accentText: "text-indigo-700",
+        accentBg: "bg-indigo-600",
+        accentHover: "hover:bg-indigo-700",
+        softBg: "bg-indigo-50",
+        softBorder: "border-indigo-200",
+        detailLabel: "ງວດ / ເລກທີ່ຕິດ (2 ໂຕ - 6 ໂຕ)",
+        detailPlaceholder: "ເຊັ່ນ: ງວດ 24/11/69 • ເລກ 58 (20k), 149 (10k)",
+        extraLabel: "ປະເພດຫວຍ / ໝາຍເຫດ",
+        extraPlaceholder: "ເຊັ່ນ: ຫວຍພັດທະນາ / ຫວຍລາວ / ຄິດໄລ່ແລ້ວ",
+        defaultRemindDays: 1,
+        description: "ບັນທຶກລາຍການຕິດໜີ້ຫວຍ/ເລກ ຕາມງວດ ວັນ ເວລາ ພ້ອມກຳນົດອາຍຸແຈ້ງເຕືອນ, ຕິດເພີ່ມ, ຈ່າຍສ່ວນໜຶ່ງ ແລະ ຈ່າຍໝົດ"
+      },
+      topup: {
+        id: "topup",
+        numberLabel: "ເມນູ 2",
+        title: "ຕິດໜີ້ເຕີມບັດ",
+        badgeId: "badge-topup",
+        accentText: "text-sky-700",
+        accentBg: "bg-sky-600",
+        accentHover: "hover:bg-sky-700",
+        softBg: "bg-sky-50",
+        softBorder: "border-sky-200",
+        detailLabel: "ເບີໂທລະສັບ / ເຄືອຂ່າຍ",
+        detailPlaceholder: "ເຊັ່ນ: 020 5544 3322 (Unitel / Lao Telecom / Tplus)",
+        extraLabel: "ແພັກເກັດ / ລາຍລະອຽດບັດ",
+        extraPlaceholder: "ເຊັ່ນ: ເຕີມເງິນ 50,000 / ແພັກເກັດເນັດ 7 ມື້",
+        defaultRemindDays: 3,
+        description: "ບັນທຶກລາຍການຕິດໜີ້ເຕີມບັດ/ເຕີມເນັດ ຕາມເບີໂທ ວັນ ເວລາ ແລະ ອາຍຸແຈ້ງເຕືອນຕາມກຳນົດ"
+      },
+      game: {
+        id: "game",
+        numberLabel: "ເມນູ 3",
+        title: "ຕິດໜີ້ເຕີມເກມ",
+        badgeId: "badge-game",
+        accentText: "text-purple-700",
+        accentBg: "bg-purple-600",
+        accentHover: "hover:bg-purple-700",
+        softBg: "bg-purple-50",
+        softBorder: "border-purple-200",
+        detailLabel: "ຊື່ເກມ / UID / Server ID",
+        detailPlaceholder: "ເຊັ່ນ: ROV / Free Fire / MLBB • UID: 98472615",
+        extraLabel: "ແພັກເກັດ / ຈຳນວນເພັດ/ຄູປອງ",
+        extraPlaceholder: "ເຊັ່ນ: 290 ເພັດ / ບັດລາຍເດືອນ / 150 ຄູປອງ",
+        defaultRemindDays: 2,
+        description: "ບັນທຶກລາຍການຕິດໜີ້ເຕີມເກມ ຕາມຊື່ເກມ UID ແພັກເກັດ ວັນ ເວລາ ແລະ ການແຈ້ງເຕືອນ"
+      },
+      transfer: {
+        id: "transfer",
+        numberLabel: "ເມນູ 4",
+        title: "ຕິດໜີ້ໂອນ-ຖອນ",
+        badgeId: "badge-transfer",
+        accentText: "text-teal-700",
+        accentBg: "bg-teal-600",
+        accentHover: "hover:bg-teal-700",
+        softBg: "bg-teal-50",
+        softBorder: "border-teal-200",
+        detailLabel: "ປະເພດທຸລະກຳ (ໂອນ / ຖອນ) & ທະນາຄານ",
+        detailPlaceholder: "ເຊັ່ນ: ໂອນອອກໃຫ້ກ່ອນ • BCEL / LDB / JDB",
+        extraLabel: "ເລກບັນຊີ / ຄ່າທຳນຽມ / ໝາຍເຫດ",
+        extraPlaceholder: "ເຊັ່ນ: ບັນຊີ 010-12-00-xxxx • ຍັງບໍ່ໄດ້ໂອນເງິນຄືນ",
+        defaultRemindDays: 1,
+        description: "ບັນທຶກລາຍການຕິດໜີ້ໂອນ-ຖອນເງິນ ຕາມວັນ ເວລາ ບັນຊີ ແລະ ກຳນົດອາຍຸແຈ້ງເຕືອນ"
+      }
+    };
+
+    // =========================================================================
+    // 2. DATE & TIME HELPERS
+    // =========================================================================
+    function getTodayDateStr(offsetDays = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getCurrentTimeStr() {
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      return `${hh}:${min}`;
+    }
+
+    function formatLAK(amount) {
+      const num = Number(amount || 0);
+      return `${Math.max(0, Math.round(num)).toLocaleString("en-US")} ກີບ`;
+    }
+
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return "-";
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return dateStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // Compute due date & reminder age status based on dueDate or created date + remindDays
+    function evaluateReminderStatus(entry) {
+      if (entry.paid || getRemaining(entry) <= 0) {
+        return {
+          code: "PAID",
+          badgeText: "✓ ຈ່າຍໝົດແລ້ວ",
+          badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+          ageText: "ຊຳລະຄົບຖ້ວນແລ້ວ",
+          isUrgent: false
+        };
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Calculate days since debt recorded
+      const startDate = entry.date ? new Date(`${entry.date}T00:00:00`) : new Date(entry.createdAt || Date.now());
+      startDate.setHours(0, 0, 0, 0);
+      const daysSinceRecorded = Math.max(0, Math.floor((today - startDate) / 86400000));
+
+      // Determine due date
+      let due = null;
+      if (entry.dueDate) {
+        due = new Date(`${entry.dueDate}T00:00:00`);
+        due.setHours(0, 0, 0, 0);
+      } else {
+        const remindDays = Math.max(0, Number(entry.remindDays ?? 1));
+        due = new Date(startDate);
+        due.setDate(due.getDate() + remindDays);
+      }
+
+      const diffDays = Math.round((due - today) / 86400000);
+
+      if (diffDays < 0) {
+        const overdueDays = Math.abs(diffDays);
+        return {
+          code: "OVERDUE",
+          badgeText: `🚨 ເກີນກຳນົດ ${overdueDays} ມື້`,
+          badgeClass: "bg-rose-100 text-rose-800 border-rose-300",
+          ageText: `ຄ້າງມາແລ້ວ ${daysSinceRecorded} ມື້ • ກຳນົດ ${formatDisplayDate(entry.dueDate || "")}`,
+          isUrgent: true
+        };
+      }
+
+      if (diffDays === 0) {
+        return {
+          code: "DUE_TODAY",
+          badgeText: "⏰ ຄົບກຳນົດມື້ນີ້",
+          badgeClass: "bg-amber-100 text-amber-800 border-amber-300",
+          ageText: `ຄ້າງມາແລ້ວ ${daysSinceRecorded} ມື້ • ຮອດກຳນົດແຈ້ງເຕືອນມື້ນີ້`,
+          isUrgent: true
+        };
+      }
+
+      if (diffDays === 1) {
+        return {
+          code: "DUE_SOON",
+          badgeText: "🔔 ຄົບກຳນົດມື້ອື່ນ",
+          badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          ageText: `ຄ້າງມາແລ້ວ ${daysSinceRecorded} ມື້ • ອີກ 1 ມື້ຮອດກຳນົດ`,
+          isUrgent: false
+        };
+      }
+
+      return {
+        code: "ACTIVE",
+        badgeText: `⏳ ຍັງບໍ່ຮອດກຳນົດ (${diffDays} ມື້)`,
+        badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+        ageText: `ຄ້າງມາແລ້ວ ${daysSinceRecorded} ມື້ • ກຳນົດ ${formatDisplayDate(entry.dueDate || "")}`,
+        isUrgent: false
+      };
+    }
+
+    function getTotalDebtAmount(entry) {
+      const base = Number(entry.initialAmount || 0);
+      const added = (entry.additions || []).reduce((s, a) => s + Number(a.amount || 0), 0);
+      return Math.max(0, base + added);
+    }
+
+    function getTotalPaidAmount(entry) {
+      const partials = (entry.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+      return Math.max(0, partials);
+    }
+
+    function getRemaining(entry) {
+      if (entry.paid) return 0;
+      const rem = getTotalDebtAmount(entry) - getTotalPaidAmount(entry);
+      return Math.max(0, rem);
+    }
+
+    // =========================================================================
+    // 3. SAMPLE DATA & STORAGE
+    // =========================================================================
+    function createSampleEntries() {
+      const nowIso = new Date().toISOString();
+      return [
+        {
+          id: "sample_lot_1",
+          category: "lottery",
+          customer: "ອ້າຍບຸນມີ",
+          date: getTodayDateStr(-2),
+          time: "15:20",
+          dueDate: getTodayDateStr(-1),
+          remindDays: 1,
+          initialAmount: 150000,
+          detail: "ງວດ 22/11 • ເລກ 58 (100k), 149 (50k)",
+          extra: "ຫວຍພັດທະນາ",
+          paid: false,
+          createdAt: nowIso,
+          additions: [
+            {
+              id: "add_1",
+              amount: 50000,
+              date: getTodayDateStr(-1),
+              time: "15:40",
+              note: "ຕິດເພີ່ມເລກ 2 ໂຕ 79"
+            }
+          ],
+          payments: [
+            {
+              id: "pay_1",
+              amount: 40000,
+              date: getTodayDateStr(-1),
+              time: "19:10",
+              note: "ຈ່າຍສ່ວນໜຶ່ງກ່ອນ"
+            }
+          ]
+        },
+        {
+          id: "sample_topup_1",
+          category: "topup",
+          customer: "ນ້ອງແອັບ",
+          date: getTodayDateStr(0),
+          time: "09:45",
+          dueDate: getTodayDateStr(0),
+          remindDays: 0,
+          initialAmount: 50000,
+          detail: "020 5588 9911 (Unitel)",
+          extra: "ເຕີມເງິນ 50,000 ກີບ",
+          paid: false,
+          createdAt: nowIso,
+          additions: [],
+          payments: []
+        },
+        {
+          id: "sample_game_1",
+          category: "game",
+          customer: "ທ້າວ ກິ່ງແກ້ວ",
+          date: getTodayDateStr(-1),
+          time: "20:15",
+          dueDate: getTodayDateStr(2),
+          remindDays: 3,
+          initialAmount: 120000,
+          detail: "Free Fire • UID: 44819203",
+          extra: "520 ເພັດ + ບັດລາຍເດືອນ",
+          paid: false,
+          createdAt: nowIso,
+          additions: [],
+          payments: [
+            {
+              id: "pay_2",
+              amount: 20000,
+              date: getTodayDateStr(0),
+              time: "11:00",
+              note: "ຈ່າຍສ່ວນໜຶ່ງ 20,000"
+            }
+          ]
+        },
+        {
+          id: "sample_trans_1",
+          category: "transfer",
+          customer: "ແມ່ຄ້າ ນາລີ",
+          date: getTodayDateStr(-3),
+          time: "14:05",
+          dueDate: getTodayDateStr(-1),
+          remindDays: 2,
+          initialAmount: 450000,
+          detail: "ໂອນອອກໃຫ້ກ່ອນ • BCEL One",
+          extra: "ເລກບັນຊີ 010-12-00-00881234",
+          paid: false,
+          createdAt: nowIso,
+          additions: [],
+          payments: []
+        }
+      ];
+    }
+
+    function loadEntries() {
+      try {
+        const raw = localStorage.getItem(DATA_STORAGE_KEY);
+        if (raw === null) {
+          const seeded = createSampleEntries();
+          localStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(seeded));
+          return seeded;
+        }
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveEntries() {
+      try {
+        localStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(entries));
+      } catch {
+        showToast("ບໍ່ສາມາດບັນທຶກຂໍ້ມູນລົງເຄື່ອງໄດ້", "error");
+      }
+    }
+
+    // =========================================================================
+    // 4. APPLICATION STATE & UI REFERENCES
+    // =========================================================================
+    let entries = loadEntries();
+    let activeMenu = "lottery"; // 'lottery' | 'topup' | 'game' | 'transfer' | 'invoice'
+
+    // Per-category filter state so switching tabs feels crisp and intentional
+    const tabFilters = {
+      lottery: { query: "", status: "UNPAID" },
+      topup: { query: "", status: "UNPAID" },
+      game: { query: "", status: "UNPAID" },
+      transfer: { query: "", status: "UNPAID" }
+    };
+
+    const workspaceContainer = document.getElementById("workspaceContainer");
+
+    function showToast(message, type = "info") {
+      const stack = document.getElementById("toastStack");
+      const toast = document.createElement("div");
+      const styles =
+        type === "success"
+          ? "bg-emerald-700 text-white border-emerald-500"
+          : type === "error"
+          ? "bg-rose-700 text-white border-rose-500"
+          : "bg-slate-900 text-white border-slate-700";
+
+      toast.className = `animate-pop pointer-events-auto border rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold shadow-xl ${styles}`;
+      toast.textContent = message;
+      stack.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(6px)";
+        toast.style.transition = "all 0.2s ease";
+        setTimeout(() => toast.remove(), 220);
+      }, 2400);
+    }
+
+    // =========================================================================
+    // 5. TOP SUMMARY & MENU ACTIVE STATES
+    // =========================================================================
+    function refreshHeaderAndMenuBadges() {
+      let grandUnpaid = 0;
+      let urgentCount = 0;
+
+      Object.keys(MENU_CONFIG).forEach(catKey => {
+        const catItems = entries.filter(e => e.category === catKey);
+        const catUnpaid = catItems.reduce((sum, item) => sum + getRemaining(item), 0);
+        grandUnpaid += catUnpaid;
+
+        catItems.forEach(item => {
+          if (evaluateReminderStatus(item).isUrgent) urgentCount += 1;
+        });
+
+        const badgeEl = document.getElementById(MENU_CONFIG[catKey].badgeId);
+        if (badgeEl) {
+          badgeEl.textContent = formatLAK(catUnpaid);
+          badgeEl.className =
+            catUnpaid > 0
+              ? "text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700"
+              : "text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700";
+        }
+      });
+
+      document.getElementById("globalUnpaidAmount").textContent = formatLAK(grandUnpaid);
+      document.getElementById("globalOverdueCount").textContent = `${urgentCount} ລາຍການ`;
+
+      // Update active menu button styles
+      document.querySelectorAll(".menu-tab").forEach(btn => {
+        const menuKey = btn.dataset.menu;
+        const isActive = menuKey === activeMenu;
+        btn.classList.toggle("ring-2", isActive);
+        btn.classList.toggle("ring-blue-600", isActive && menuKey !== "invoice");
+        btn.classList.toggle("ring-amber-500", isActive && menuKey === "invoice");
+        btn.classList.toggle("bg-blue-50/70", isActive && menuKey !== "invoice");
+        btn.classList.toggle("bg-amber-50/70", isActive && menuKey === "invoice");
+        btn.classList.toggle("border-blue-600", isActive && menuKey !== "invoice");
+        btn.classList.toggle("border-amber-500", isActive && menuKey === "invoice");
+      });
+    }
+
+    function selectMenu(menuKey) {
+      activeMenu = menuKey;
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+    }
+
+    document.querySelectorAll(".menu-tab").forEach(btn => {
+      btn.addEventListener("click", () => selectMenu(btn.dataset.menu));
+    });
+
+    // =========================================================================
+    // 6. DEDICATED CATEGORY WORKSPACE RENDERER (MENUS 1 - 4)
+    // =========================================================================
+    function renderWorkspace() {
+      workspaceContainer.classList.remove("animate-pop");
+      void workspaceContainer.offsetWidth;
+      workspaceContainer.classList.add("animate-pop");
+
+      if (activeMenu === "invoice") {
+        renderInvoiceBuilder();
+      } else {
+        renderCategoryView(activeMenu);
+      }
+    }
+
+    function renderCategoryView(catKey) {
+      const cfg = MENU_CONFIG[catKey];
+      const catEntries = entries.filter(e => e.category === catKey);
+      const totalUnpaid = catEntries.reduce((s, e) => s + getRemaining(e), 0);
+      const totalSettled = catEntries.reduce((s, e) => s + getTotalPaidAmount(e), 0);
+      const urgentItems = catEntries.filter(e => evaluateReminderStatus(e).isUrgent);
+
+      const currentFilter = tabFilters[catKey] || { query: "", status: "UNPAID" };
+      const filtered = catEntries.filter(item => {
+        const rem = getRemaining(item);
+        const isSettled = item.paid || rem <= 0;
+        const st = evaluateReminderStatus(item);
+
+        let matchStatus = true;
+        if (currentFilter.status === "UNPAID") matchStatus = !isSettled;
+        else if (currentFilter.status === "PAID") matchStatus = isSettled;
+        else if (currentFilter.status === "URGENT") matchStatus = st.isUrgent;
+
+        const q = currentFilter.query.trim().toLowerCase();
+        const matchQuery =
+          !q ||
+          String(item.customer || "").toLowerCase().includes(q) ||
+          String(item.detail || "").toLowerCase().includes(q) ||
+          String(item.extra || "").toLowerCase().includes(q) ||
+          String(item.date || "").toLowerCase().includes(q);
+
+        return matchStatus && matchQuery;
+      });
+
+      workspaceContainer.innerHTML = `
+        <div class="space-y-5">
+          <!-- Category Banner & 3 KPI Cards -->
+          <section class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full ${cfg.softBg} ${cfg.accentText} border ${cfg.softBorder}">
+                    ${cfg.numberLabel}
+                  </span>
+                  <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">${cfg.title}</h2>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">${cfg.description}</p>
+              </div>
+              <button
+                type="button"
+                onclick="openInvoiceForCategory('${catKey}')"
+                class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-extrabold shadow transition cursor-pointer self-start md:self-auto shrink-0"
+              >
+                🧾 ສ້າງໃບທ້ວງໜີ້ໝວດນີ້
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+              <div class="rounded-2xl bg-rose-50/70 border border-rose-100 p-4">
+                <div class="text-xs font-bold text-rose-700">ຍອດຄ້າງຊຳລະ (${cfg.title})</div>
+                <div class="text-xl sm:text-2xl font-extrabold text-rose-600 mt-1">${formatLAK(totalUnpaid)}</div>
+              </div>
+              <div class="rounded-2xl bg-amber-50/70 border border-amber-100 p-4">
+                <div class="text-xs font-bold text-amber-800">ອາຍຸແຈ້ງເຕືອນ (ຄົບ/ເກີນກຳນົດ)</div>
+                <div class="text-xl sm:text-2xl font-extrabold text-amber-700 mt-1">${urgentItems.length} ລາຍການ</div>
+              </div>
+              <div class="rounded-2xl bg-emerald-50/70 border border-emerald-100 p-4">
+                <div class="text-xs font-bold text-emerald-800">ຍອດທີ່ຮັບຊຳລະແລ້ວ</div>
+                <div class="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-1">${formatLAK(totalSettled)}</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Add New Debt Entry Form for This Category -->
+          <section class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-sm">
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mb-4">
+              ➕ ເພີ່ມລາຍການໃໝ່ — ${cfg.title}
+            </h3>
+
+            <form id="categoryEntryForm" data-cat="${catKey}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <!-- ຊື່ -->
+              <div class="sm:col-span-2">
+                <label for="entryCustomer" class="block text-xs font-bold text-slate-700 mb-1">ຊື່ລູກຄ້າ *</label>
+                <input
+                  type="text"
+                  id="entryCustomer"
+                  required
+                  placeholder="ປ້ອນຊື່ລູກຄ້າ ເຊັ່ນ: ອ້າຍບຸນ, ນ້ອງແອັບ..."
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- ວັນ -->
+              <div>
+                <label for="entryDate" class="block text-xs font-bold text-slate-700 mb-1">ວັນ *</label>
+                <input
+                  type="date"
+                  id="entryDate"
+                  value="${getTodayDateStr(0)}"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- ເວລາ -->
+              <div>
+                <label for="entryTime" class="block text-xs font-bold text-slate-700 mb-1">ເວລາ *</label>
+                <input
+                  type="time"
+                  id="entryTime"
+                  value="${getCurrentTimeStr()}"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- ຈຳນວນເງິນຕິດໜີ້ -->
+              <div>
+                <label for="entryAmount" class="block text-xs font-bold text-slate-700 mb-1">ຈຳນວນຕິດໜີ້ (ກີບ) *</label>
+                <input
+                  type="number"
+                  id="entryAmount"
+                  min="1"
+                  step="any"
+                  required
+                  placeholder="ເຊັ່ນ: 50000"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- ອາຍຸແຈ້ງເຕືອນ (ຕາມກຳນົດ - ຈຳນວນມື້) -->
+              <div>
+                <label for="entryRemindDays" class="block text-xs font-bold text-slate-700 mb-1">
+                  ອາຍຸແຈ້ງເຕືອນ (ຕາມກຳນົດ/ມື້)
+                </label>
+                <select
+                  id="entryRemindDays"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-600"
+                >
+                  <option value="0" ${cfg.defaultRemindDays === 0 ? "selected" : ""}>0 ມື້ (ແຈ້ງເຕືອນມື້ນີ້ເລີຍ)</option>
+                  <option value="1" ${cfg.defaultRemindDays === 1 ? "selected" : ""}>1 ມື້ (ແຈ້ງເຕືອນພາຍໃນ 1 ມື້)</option>
+                  <option value="2" ${cfg.defaultRemindDays === 2 ? "selected" : ""}>2 ມື້ (ແຈ້ງເຕືອນພາຍໃນ 2 ມື້)</option>
+                  <option value="3" ${cfg.defaultRemindDays === 3 ? "selected" : ""}>3 ມື້ (ແຈ້ງເຕືອນພາຍໃນ 3 ມື້)</option>
+                  <option value="7">7 ມື້ (ຄົບ 1 ອາທິດ)</option>
+                  <option value="15">15 ມື້ (ເຄິ່ງເດືອນ)</option>
+                  <option value="30">30 ມື້ (ຄົບ 1 ເດືອນ)</option>
+                </select>
+              </div>
+
+              <!-- ວັນກຳນົດຊຳລະ / ຄົບກຳນົດ -->
+              <div class="sm:col-span-2">
+                <label for="entryDueDate" class="block text-xs font-bold text-slate-700 mb-1">
+                  ວັນຄົບກຳນົດຊຳລະ (ປັບເອງໄດ້)
+                </label>
+                <input
+                  type="date"
+                  id="entryDueDate"
+                  value="${getTodayDateStr(cfg.defaultRemindDays)}"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- Category-specific detail field -->
+              <div class="sm:col-span-2">
+                <label for="entryDetail" class="block text-xs font-bold text-slate-700 mb-1">${cfg.detailLabel}</label>
+                <input
+                  type="text"
+                  id="entryDetail"
+                  placeholder="${cfg.detailPlaceholder}"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <!-- Additional helpful field -->
+              <div class="sm:col-span-2">
+                <label for="entryExtra" class="block text-xs font-bold text-slate-700 mb-1">${cfg.extraLabel}</label>
+                <input
+                  type="text"
+                  id="entryExtra"
+                  placeholder="${cfg.extraPlaceholder}"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div class="sm:col-span-2 lg:col-span-4 pt-1">
+                <button
+                  type="submit"
+                  class="w-full ${cfg.accentBg} ${cfg.accentHover} text-white font-extrabold text-sm py-3 px-4 rounded-xl shadow transition cursor-pointer"
+                >
+                  💾 ບັນທຶກລາຍການ${cfg.title}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Filter & List of Entries in This Category -->
+          <section class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div>
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900">📋 ລາຍການ${cfg.title}</h3>
+                <p class="text-xs text-slate-500">ກົດ <strong>ຕິດເພີ່ມ</strong>, <strong>ຈ່າຍສ່ວນໜຶ່ງ</strong>, <strong>ຈ່າຍໝົດ</strong> ຫຼື ເບິ່ງປະຫວັດໄດ້ທັນທີ</p>
+              </div>
+              <span class="text-xs font-bold text-slate-500">ພົບ ${filtered.length} ລາຍການ</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+              <input
+                type="text"
+                id="catSearchInput"
+                value="${escapeHTML(currentFilter.query)}"
+                placeholder="🔍 ຄົ້ນຫາຊື່ລູກຄ້າ, ລາຍລະອຽດ ຫຼື ວັນທີ..."
+                class="w-full rounded-xl border border-slate-300 bg-slate-50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-600"
+              />
+              <select
+                id="catStatusFilter"
+                class="w-full rounded-xl border border-slate-300 bg-slate-50 focus:bg-white px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-600"
+              >
+                <option value="UNPAID" ${currentFilter.status === "UNPAID" ? "selected" : ""}>ຍັງຄ້າງຊຳລະ</option>
+                <option value="URGENT" ${currentFilter.status === "URGENT" ? "selected" : ""}>⏰ ຄົບກຳນົດ / ເກີນກຳນົດແຈ້ງເຕືອນ</option>
+                <option value="ALL" ${currentFilter.status === "ALL" ? "selected" : ""}>ທຸກລາຍການ (ຄ້າງ + ຈ່າຍໝົດ)</option>
+                <option value="PAID" ${currentFilter.status === "PAID" ? "selected" : ""}>✓ ຈ່າຍໝົດແລ້ວ</option>
+              </select>
+            </div>
+
+            <div id="categoryEntriesList" class="space-y-3">
+              ${filtered.length === 0 ? renderEmptyCategoryState(cfg.title) : filtered.map(item => renderEntryCard(item, cfg)).join("")}
+            </div>
+          </section>
+        </div>
+      `;
+
+      // Bind form events
+      const form = document.getElementById("categoryEntryForm");
+      const remindDaysSelect = document.getElementById("entryRemindDays");
+      const dueDateInput = document.getElementById("entryDueDate");
+      const entryDateInput = document.getElementById("entryDate");
+
+      function syncDueDateFromDays() {
+        const baseStr = entryDateInput.value || getTodayDateStr(0);
+        const days = Number(remindDaysSelect.value || 0);
+        const baseDate = new Date(`${baseStr}T00:00:00`);
+        baseDate.setDate(baseDate.getDate() + days);
+        const yyyy = baseDate.getFullYear();
+        const mm = String(baseDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(baseDate.getDate()).padStart(2, "0");
+        dueDateInput.value = `${yyyy}-${mm}-${dd}`;
+      }
+
+      remindDaysSelect.addEventListener("change", syncDueDateFromDays);
+      entryDateInput.addEventListener("change", syncDueDateFromDays);
+
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const customer = document.getElementById("entryCustomer").value.trim();
+        const date = document.getElementById("entryDate").value || getTodayDateStr(0);
+        const time = document.getElementById("entryTime").value || getCurrentTimeStr();
+        const initialAmount = Number(document.getElementById("entryAmount").value);
+        const remindDays = Number(document.getElementById("entryRemindDays").value || 0);
+        const dueDate = document.getElementById("entryDueDate").value || getTodayDateStr(remindDays);
+        const detail = document.getElementById("entryDetail").value.trim();
+        const extra = document.getElementById("entryExtra").value.trim();
+
+        if (!customer || !Number.isFinite(initialAmount) || initialAmount <= 0) {
+          showToast("ກະລຸນາປ້ອນຊື່ລູກຄ້າ ແລະ ຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ", "error");
+          return;
+        }
+
+        const newEntry = {
+          id: `debt_${catKey}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          category: catKey,
+          customer,
+          date,
+          time,
+          dueDate,
+          remindDays,
+          initialAmount,
+          detail,
+          extra,
+          paid: false,
+          createdAt: new Date().toISOString(),
+          additions: [],
+          payments: []
+        };
+
+        entries.unshift(newEntry);
+        saveEntries();
+        refreshHeaderAndMenuBadges();
+        renderWorkspace();
+        showToast(`ບັນທຶກລາຍການຂອງ "${customer}" ໃນ ${cfg.title} ແລ້ວ`, "success");
+      });
+
+      document.getElementById("catSearchInput").addEventListener("input", e => {
+        tabFilters[catKey].query = e.target.value;
+        renderWorkspace();
+      });
+
+      document.getElementById("catStatusFilter").addEventListener("change", e => {
+        tabFilters[catKey].status = e.target.value;
+        renderWorkspace();
+      });
+    }
+
+    function renderEmptyCategoryState(title) {
+      return `
+        <div class="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50">
+          <div class="text-2xl mb-1">📂</div>
+          <div class="text-sm font-bold text-slate-600">ຍັງບໍ່ມີລາຍການ${escapeHTML(title)}ໃນເງື່ອນໄຂນີ້</div>
+          <div class="text-xs text-slate-400 mt-1">ສາມາດເພີ່ມລາຍການໃໝ່ໄດ້ໃນຟອມດ້ານເທິງ</div>
+        </div>
+      `;
+    }
+
+    function renderEntryCard(item, cfg) {
+      const totalDebt = getTotalDebtAmount(item);
+      const totalPaid = getTotalPaidAmount(item);
+      const remaining = getRemaining(item);
+      const isSettled = item.paid || remaining <= 0;
+      const status = evaluateReminderStatus(item);
+      const addedCount = (item.additions || []).length;
+      const paymentCount = (item.payments || []).length;
+
+      return `
+        <article class="rounded-2xl border ${
+          isSettled
+            ? "border-emerald-200 bg-emerald-50/30"
+            : status.isUrgent
+            ? "border-rose-300 bg-rose-50/20"
+            : "border-slate-200 bg-white"
+        } p-4 sm:p-5 transition">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- Left Info -->
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${status.badgeClass}">
+                  ${status.badgeText}
+                </span>
+                <span class="text-xs font-semibold text-slate-500">
+                  📅 ວັນທີ ${formatDisplayDate(item.date)} • ⏰ ເວລາ ${escapeHTML(item.time || "-")}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap items-baseline gap-2 mt-1.5">
+                <h4 class="text-lg font-extrabold text-slate-900 break-words">${escapeHTML(item.customer)}</h4>
+                <span class="text-xs font-semibold text-slate-500">(${status.ageText})</span>
+              </div>
+
+              ${
+                item.detail || item.extra
+                  ? `<div class="mt-1.5 text-xs sm:text-sm text-slate-700 space-y-0.5">
+                      ${item.detail ? `<div><span class="font-bold text-slate-500">${escapeHTML(cfg.detailLabel.split("/")[0])}:</span> ${escapeHTML(item.detail)}</div>` : ""}
+                      ${item.extra ? `<div><span class="font-bold text-slate-500">ໝາຍເຫດ:</span> ${escapeHTML(item.extra)}</div>` : ""}
+                    </div>`
+                  : ""
+              }
+
+              <div class="flex flex-wrap items-center gap-3 mt-2.5 text-xs font-semibold text-slate-600">
+                <span>ຍອດຕິດທັງໝົດ: <strong class="text-slate-900">${formatLAK(totalDebt)}</strong></span>
+                ${totalPaid > 0 ? `<span>ຈ່າຍແລ້ວ: <strong class="text-emerald-700">${formatLAK(totalPaid)}</strong></span>` : ""}
+                <button
+                  type="button"
+                  onclick="openHistoryModal('${item.id}')"
+                  class="text-blue-700 hover:underline font-bold cursor-pointer"
+                >
+                  🕒 ປະຫວັດ (${addedCount} ຕິດເພີ່ມ / ${paymentCount} ການຈ່າຍ)
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Balance & Action Buttons -->
+            <div class="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end justify-between gap-2.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+              <div class="sm:text-left lg:text-right">
+                <div class="text-[11px] font-bold uppercase text-slate-400">
+                  ${isSettled ? "ສະຖານະ" : "ຍອດຄ້າງເຫຼືອ"}
+                </div>
+                <div class="text-xl sm:text-2xl font-extrabold ${
+                  isSettled ? "text-emerald-600" : "text-rose-600"
+                }">
+                  ${isSettled ? "0 ກີບ" : formatLAK(remaining)}
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                ${
+                  !isSettled
+                    ? `
+                      <button
+                        type="button"
+                        onclick="openAddMoreModal('${item.id}')"
+                        class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-extrabold transition cursor-pointer"
+                      >
+                        ➕ ຕິດເພີ່ມ
+                      </button>
+                      <button
+                        type="button"
+                        onclick="openPartialPayModal('${item.id}')"
+                        class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-extrabold transition cursor-pointer"
+                      >
+                        💵 ຈ່າຍສ່ວນໜຶ່ງ
+                      </button>
+                      <button
+                        type="button"
+                        onclick="payFullEntry('${item.id}')"
+                        class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm transition cursor-pointer"
+                      >
+                        ✓ ຈ່າຍໝົດ
+                      </button>
+                    `
+                    : `
+                      <button
+                        type="button"
+                        onclick="reopenEntry('${item.id}')"
+                        class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                      >
+                        ↩ ເປີດຄ້າງຄືນ
+                      </button>
+                    `
+                }
+
+                <button
+                  type="button"
+                  onclick="jumpToCustomerInvoice('${escapeHTML(item.customer)}')"
+                  class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 text-xs font-bold transition cursor-pointer"
+                  title="ສ້າງໃບທ້ວງໜີ້ລູກຄ້ານີ້"
+                >
+                  🧾 ທ້ວງໜີ້
+                </button>
+
+                <button
+                  type="button"
+                  onclick="deleteEntry('${item.id}')"
+                  class="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-700 text-xs font-bold transition cursor-pointer"
+                  title="ລຶບລາຍການ"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    // =========================================================================
+    // 7. ENTRY ACTIONS: ຕິດເພີ່ມ, ຈ່າຍສ່ວນໜຶ່ງ, ຈ່າຍໝົດ, ປະຫວັດ, ລຶບ
+    // =========================================================================
+    const addMoreModal = document.getElementById("addMoreModal");
+    const partialPayModal = document.getElementById("partialPayModal");
+    const historyModal = document.getElementById("historyModal");
+
+    window.openAddMoreModal = function(entryId) {
+      const item = entries.find(e => e.id === entryId);
+      if (!item) return;
+
+      document.getElementById("addMoreEntryId").value = item.id;
+      document.getElementById("addMoreCustomerTitle").textContent = item.customer;
+      document.getElementById("addMoreCurrentBalance").textContent = `ຍອດຄ້າງປັດຈຸບັນ: ${formatLAK(getRemaining(item))}`;
+      document.getElementById("addMoreAmount").value = "";
+      document.getElementById("addMoreDate").value = getTodayDateStr(0);
+      document.getElementById("addMoreTime").value = getCurrentTimeStr();
+      document.getElementById("addMoreNote").value = "";
+
+      addMoreModal.classList.remove("hidden");
+      addMoreModal.classList.add("flex");
+      document.getElementById("addMoreAmount").focus();
+    };
+
+    function closeAddMoreModal() {
+      addMoreModal.classList.add("hidden");
+      addMoreModal.classList.remove("flex");
+    }
+
+    document.getElementById("closeAddMoreBtn").addEventListener("click", closeAddMoreModal);
+    document.getElementById("cancelAddMoreBtn").addEventListener("click", closeAddMoreModal);
+    document.getElementById("addMoreBackdrop").addEventListener("click", closeAddMoreModal);
+
+    document.getElementById("addMoreForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const id = document.getElementById("addMoreEntryId").value;
+      const amount = Number(document.getElementById("addMoreAmount").value);
+      const date = document.getElementById("addMoreDate").value || getTodayDateStr(0);
+      const time = document.getElementById("addMoreTime").value || getCurrentTimeStr();
+      const note = document.getElementById("addMoreNote").value.trim() || "ຕິດເພີ່ມ";
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showToast("ກະລຸນາປ້ອນຈຳນວນທີ່ຕິດເພີ່ມໃຫ້ຖືກຕ້ອງ", "error");
+        return;
+      }
+
+      entries = entries.map(item => {
+        if (item.id !== id) return item;
+        const additions = Array.isArray(item.additions) ? [...item.additions] : [];
+        additions.push({
+          id: "add_" + Date.now(),
+          amount,
+          date,
+          time,
+          note
+        });
+        return {
+          ...item,
+          paid: false,
+          additions
+        };
+      });
+
+      saveEntries();
+      closeAddMoreModal();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast(`ບັນທຶກຕິດເພີ່ມ ${formatLAK(amount)} ສຳເລັດແລ້ວ`, "success");
+    });
+
+    // Partial payment modal
+    window.openPartialPayModal = function(entryId) {
+      const item = entries.find(e => e.id === entryId);
+      if (!item) return;
+      const remaining = getRemaining(item);
+
+      document.getElementById("partialEntryId").value = item.id;
+      document.getElementById("partialCustomerTitle").textContent = item.customer;
+      document.getElementById("partialRemainingLabel").textContent = `ຍອດຄ້າງເຫຼືອ: ${formatLAK(remaining)}`;
+      document.getElementById("partialAmount").value = "";
+      document.getElementById("partialAmount").max = String(remaining);
+      document.getElementById("partialDate").value = getTodayDateStr(0);
+      document.getElementById("partialTime").value = getCurrentTimeStr();
+      document.getElementById("partialNote").value = "";
+
+      // Quick helper buttons (25%, 50%, or full remaining)
+      const quickBox = document.getElementById("quickPartialButtons");
+      const q25 = Math.max(1000, Math.round(remaining * 0.25));
+      const q50 = Math.max(1000, Math.round(remaining * 0.5));
+      quickBox.innerHTML = `
+        <button type="button" onclick="setPartialVal(${Math.min(remaining, q25)})" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 cursor-pointer">25% (${formatLAK(Math.min(remaining, q25))})</button>
+        <button type="button" onclick="setPartialVal(${Math.min(remaining, q50)})" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 cursor-pointer">ເຄິ່ງໜຶ່ງ (${formatLAK(Math.min(remaining, q50))})</button>
+        <button type="button" onclick="setPartialVal(${remaining})" class="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-xs font-bold text-emerald-800 cursor-pointer">ຈ່າຍຄົບຍອດ (${formatLAK(remaining)})</button>
+      `;
+
+      partialPayModal.classList.remove("hidden");
+      partialPayModal.classList.add("flex");
+      document.getElementById("partialAmount").focus();
+    };
+
+    window.setPartialVal = function(val) {
+      document.getElementById("partialAmount").value = Number(val);
+    };
+
+    function closePartialPayModal() {
+      partialPayModal.classList.add("hidden");
+      partialPayModal.classList.remove("flex");
+    }
+
+    document.getElementById("closePartialBtn").addEventListener("click", closePartialPayModal);
+    document.getElementById("cancelPartialBtn").addEventListener("click", closePartialPayModal);
+    document.getElementById("partialPayBackdrop").addEventListener("click", closePartialPayModal);
+
+    document.getElementById("partialPayForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const id = document.getElementById("partialEntryId").value;
+      const amount = Number(document.getElementById("partialAmount").value);
+      const date = document.getElementById("partialDate").value || getTodayDateStr(0);
+      const time = document.getElementById("partialTime").value || getCurrentTimeStr();
+      const note = document.getElementById("partialNote").value.trim() || "ຈ່າຍສ່ວນໜຶ່ງ";
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showToast("ກະລຸນາປ້ອນຈຳນວນເງິນທີ່ຈ່າຍໃຫ້ຖືກຕ້ອງ", "error");
+        return;
+      }
+
+      let becameFull = false;
+      entries = entries.map(item => {
+        if (item.id !== id) return item;
+        const remBefore = getRemaining(item);
+        const applied = Math.min(amount, remBefore);
+        const payments = Array.isArray(item.payments) ? [...item.payments] : [];
+        payments.push({
+          id: "pay_" + Date.now(),
+          amount: applied,
+          date,
+          time,
+          note
+        });
+        const newRem = Math.max(0, getTotalDebtAmount(item) - payments.reduce((s, p) => s + Number(p.amount || 0), 0));
+        if (newRem <= 0) becameFull = true;
+
+        return {
+          ...item,
+          payments,
+          paid: newRem <= 0
+        };
+      });
+
+      saveEntries();
+      closePartialPayModal();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast(
+        becameFull ? "ຮັບຊຳລະຄົບຍອດແລ້ວ! ປິດບັນຊີລາຍການນີ້ແລ້ວ" : `ບັນທຶກການຈ່າຍສ່ວນໜຶ່ງ ${formatLAK(amount)} ແລ້ວ`,
+        "success"
+      );
+    });
+
+    // Full settlement (ຈ່າຍໝົດ)
+    window.payFullEntry = function(entryId) {
+      entries = entries.map(item => {
+        if (item.id !== entryId) return item;
+        const rem = getRemaining(item);
+        const payments = Array.isArray(item.payments) ? [...item.payments] : [];
+        if (rem > 0) {
+          payments.push({
+            id: "pay_full_" + Date.now(),
+            amount: rem,
+            date: getTodayDateStr(0),
+            time: getCurrentTimeStr(),
+            note: "ຈ່າຍໝົດຍອດຄ້າງ"
+          });
+        }
+        return {
+          ...item,
+          payments,
+          paid: true
+        };
+      });
+
+      saveEntries();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast("ບັນທຶກ ຈ່າຍໝົດ ສຳເລັດແລ້ວ ✓", "success");
+    };
+
+    window.reopenEntry = function(entryId) {
+      entries = entries.map(item => (item.id === entryId ? { ...item, paid: false } : item));
+      saveEntries();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast("ເປີດລາຍການກັບມາເປັນຍັງຄ້າງແລ້ວ", "info");
+    };
+
+    window.deleteEntry = function(entryId) {
+      const target = entries.find(e => e.id === entryId);
+      entries = entries.filter(e => e.id !== entryId);
+      saveEntries();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast(target ? `ລຶບລາຍການຂອງ "${target.customer}" ແລ້ວ` : "ລຶບລາຍການແລ້ວ", "info");
+    };
+
+    // History modal
+    window.openHistoryModal = function(entryId) {
+      const item = entries.find(e => e.id === entryId);
+      if (!item) return;
+
+      const cfg = MENU_CONFIG[item.category] || { title: "ຕິດໜີ້" };
+      document.getElementById("historyCustomerTitle").textContent = `${item.customer} (${cfg.title})`;
+      document.getElementById("historySummarySub").textContent =
+        `ຕັ້ງຕົ້ນ ${formatLAK(item.initialAmount)} • ຍອດລວມ ${formatLAK(getTotalDebtAmount(item))} • ຄ້າງເຫຼືອ ${formatLAK(getRemaining(item))}`;
+
+      const events = [
+        {
+          sortKey: `${item.date || ""} ${item.time || "00:00"}`,
+          badge: "ເລີ່ມຕິດໜີ້",
+          badgeClass: "bg-slate-200 text-slate-800",
+          amountText: `+${formatLAK(item.initialAmount)}`,
+          amountClass: "text-rose-600",
+          dateText: `${formatDisplayDate(item.date)} • ${item.time || "-"}`,
+          note: item.detail || item.extra || "ບັນທຶກລາຍການຕິດໜີ້"
+        },
+        ...(item.additions || []).map(a => ({
+          sortKey: `${a.date || ""} ${a.time || "00:00"}`,
+          badge: "➕ ຕິດເພີ່ມ",
+          badgeClass: "bg-blue-100 text-blue-800",
+          amountText: `+${formatLAK(a.amount)}`,
+          amountClass: "text-rose-600",
+          dateText: `${formatDisplayDate(a.date)} • ${a.time || "-"}`,
+          note: a.note || "ຕິດເພີ່ມຍອດ"
+        })),
+        ...(item.payments || []).map(p => ({
+          sortKey: `${p.date || ""} ${p.time || "00:00"}`,
+          badge: "💵 ຊຳລະເງິນ",
+          badgeClass: "bg-emerald-100 text-emerald-800",
+          amountText: `-${formatLAK(p.amount)}`,
+          amountClass: "text-emerald-700",
+          dateText: `${formatDisplayDate(p.date)} • ${p.time || "-"}`,
+          note: p.note || "ຈ່າຍເງິນ"
+        }))
+      ];
+
+      document.getElementById("historyTimeline").innerHTML = events
+        .map(ev => `
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 flex items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full ${ev.badgeClass}">${ev.badge}</span>
+                <span class="text-xs text-slate-500">${escapeHTML(ev.dateText)}</span>
+              </div>
+              <div class="text-xs sm:text-sm font-semibold text-slate-700 mt-1">${escapeHTML(ev.note)}</div>
+            </div>
+            <div class="text-sm sm:text-base font-extrabold ${ev.amountClass} shrink-0">${ev.amountText}</div>
+          </div>
+        `)
+        .join("");
+
+      historyModal.classList.remove("hidden");
+      historyModal.classList.add("flex");
+    };
+
+    function closeHistoryModal() {
+      historyModal.classList.add("hidden");
+      historyModal.classList.remove("flex");
+    }
+
+    document.getElementById("closeHistoryBtn").addEventListener("click", closeHistoryModal);
+    document.getElementById("closeHistoryBottomBtn").addEventListener("click", closeHistoryModal);
+    document.getElementById("historyBackdrop").addEventListener("click", closeHistoryModal);
+
+    // =========================================================================
+    // 8. MENU 5: ສ້າງໃບທ້ວງໜີ້ (DEBT REMINDER SLIP / INVOICE BUILDER)
+    // =========================================================================
+    let invoiceState = {
+      selectedCustomer: "ALL_UNPAID",
+      selectedCategories: ["lottery", "topup", "game", "transfer"],
+      senderName: "ຮ້ານບໍລິການ / ຜູ້ຮັບຝາກ",
+      paymentInfo: "ໂອນເຂົ້າບັນຊີ BCEL / LDB ແລ້ວສົ່ງສະລິບແຈ້ງດ້ວຍເດີ້",
+      customNote: "ຝາກກວດສອບລາຍການຄ້າງຊຳລະ ແລະ ຊຳລະຕາມກຳນົດ ຂອບໃຈຫຼາຍໆ 🙏",
+      tone: "polite" // 'polite' | 'urgent' | 'friendly'
+    };
+
+    try {
+      const savedPref = JSON.parse(localStorage.getItem(INVOICE_PREF_KEY) || "null");
+      if (savedPref && typeof savedPref === "object") {
+        invoiceState = { ...invoiceState, ...savedPref };
+      }
+    } catch {
+      // Ignore storage read error
+    }
+
+    function saveInvoicePref() {
+      try {
+        localStorage.setItem(INVOICE_PREF_KEY, JSON.stringify(invoiceState));
+      } catch {
+        // Ignore storage write error
+      }
+    }
+
+    window.openInvoiceForCategory = function(catKey) {
+      invoiceState.selectedCategories = [catKey];
+      invoiceState.selectedCustomer = "ALL_UNPAID";
+      saveInvoicePref();
+      selectMenu("invoice");
+    };
+
+    window.jumpToCustomerInvoice = function(customerName) {
+      invoiceState.selectedCustomer = customerName;
+      invoiceState.selectedCategories = ["lottery", "topup", "game", "transfer"];
+      saveInvoicePref();
+      selectMenu("invoice");
+    };
+
+    function getUniqueCustomersWithUnpaid() {
+      const set = new Set();
+      entries.forEach(e => {
+        if (getRemaining(e) > 0 && e.customer) {
+          set.add(e.customer.trim());
+        }
+      });
+      return Array.from(set);
+    }
+
+    function buildInvoiceItems() {
+      return entries.filter(item => {
+        const rem = getRemaining(item);
+        if (rem <= 0) return false;
+        if (!invoiceState.selectedCategories.includes(item.category)) return false;
+        if (invoiceState.selectedCustomer !== "ALL_UNPAID" && item.customer !== invoiceState.selectedCustomer) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function generateInvoicePlainText(matchedItems) {
+      const total = matchedItems.reduce((s, e) => s + getRemaining(e), 0);
+      const headerGreeting =
+        invoiceState.tone === "urgent"
+          ? "🚨 ແຈ້ງເຕືອນດ່ວນ: ໃບທ້ວງໜີ້ຄ້າງຊຳລະ"
+          : invoiceState.tone === "friendly"
+          ? "😊 ສະບາຍດີ! ສະຫຼຸບລາຍການຄ້າງຊຳລະ"
+          : "🧾 ໃບທ້ວງໜີ້ / ແຈ້ງຍອດຄ້າງຊຳລະ";
+
+      const targetLine =
+        invoiceState.selectedCustomer === "ALL_UNPAID"
+          ? "ລູກຄ້າ: ລວມລາຍການຍັງຄ້າງ"
+          : `ລູກຄ້າ: ${invoiceState.selectedCustomer}`;
+
+      const lines = [
+        headerGreeting,
+        `ຈາກ: ${invoiceState.senderName || "ຜູ້ບໍລິການ"}`,
+        targetLine,
+        `ວັນທີອອກໃບທ້ວງ: ${formatDisplayDate(getTodayDateStr(0))} (${getCurrentTimeStr()})`,
+        "----------------------------------------"
+      ];
+
+      if (matchedItems.length === 0) {
+        lines.push("ບໍ່ມີລາຍການຄ້າງຊຳລະຕາມເງື່ອນໄຂທີ່ເລືອກ");
+      } else {
+        matchedItems.forEach((item, idx) => {
+          const catTitle = MENU_CONFIG[item.category]?.title || item.category;
+          const rem = getRemaining(item);
+          const statusLabel = evaluateReminderStatus(item).badgeText;
+          lines.push(`${idx + 1}. [${catTitle}] ${item.customer} — ${formatLAK(rem)}`);
+          lines.push(`   ວັນ/ເວລາ: ${formatDisplayDate(item.date)} ${item.time || ""} | ${statusLabel}`);
+          if (item.detail || item.extra) {
+            lines.push(`   ລາຍລະອຽດ: ${[item.detail, item.extra].filter(Boolean).join(" • ")}`);
+          }
+        });
+      }
+
+      lines.push("----------------------------------------");
+      lines.push(`ຍອດຄ້າງຊຳລະທັງໝົດ: ${formatLAK(total)}`);
+      if (invoiceState.paymentInfo) {
+        lines.push(`ຊ່ອງທາງຊຳລະ: ${invoiceState.paymentInfo}`);
+      }
+      if (invoiceState.customNote) {
+        lines.push(`ໝາຍເຫດ: ${invoiceState.customNote}`);
+      }
+
+      return lines.join("\n");
+    }
+
+    function renderInvoiceBuilder() {
+      const customers = getUniqueCustomersWithUnpaid();
+      const matchedItems = buildInvoiceItems();
+      const totalAmount = matchedItems.reduce((s, e) => s + getRemaining(e), 0);
+      const plainText = generateInvoicePlainText(matchedItems);
+
+      workspaceContainer.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left Column: Builder Controls -->
+          <section class="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
+            <div>
+              <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">ເມນູ 5</span>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">🧾 ສ້າງໃບທ້ວງໜີ້</h2>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5">ເລືອກລູກຄ້າ ແລະ ໝວດໝູ່ຕິດໜີ້ເພື່ອສ້າງໃບທ້ວງໜີ້ສົ່ງໃຫ້ລູກຄ້າ</p>
+            </div>
+
+            <!-- Select Customer -->
+            <div>
+              <label for="invCustomerSelect" class="block text-xs font-bold text-slate-700 mb-1">ເລືອກລູກຄ້າທີ່ຍັງຄ້າງໜີ້</label>
+              <select
+                id="invCustomerSelect"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-amber-500"
+              >
+                <option value="ALL_UNPAID" ${invoiceState.selectedCustomer === "ALL_UNPAID" ? "selected" : ""}>
+                  ທຸກລູກຄ້າທີ່ຍັງຄ້າງ
+                </option>
+                ${customers
+                  .map(
+                    name =>
+                      `<option value="${escapeHTML(name)}" ${invoiceState.selectedCustomer === name ? "selected" : ""}>${escapeHTML(name)}</option>`
+                  )
+                  .join("")}
+              </select>
+            </div>
+
+            <!-- Select Categories -->
+            <div>
+              <span class="block text-xs font-bold text-slate-700 mb-1.5">ເລືອກໝວດໝູ່ທີ່ຈະລວມໃນໃບທ້ວງໜີ້</span>
+              <div class="grid grid-cols-2 gap-2">
+                ${Object.values(MENU_CONFIG)
+                  .map(cat => {
+                    const checked = invoiceState.selectedCategories.includes(cat.id);
+                    return `
+                      <label class="flex items-center gap-2 p-2.5 rounded-xl border ${
+                        checked ? "border-amber-400 bg-amber-50/70" : "border-slate-200 bg-slate-50"
+                      } text-xs font-bold text-slate-800 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          class="inv-cat-checkbox rounded accent-amber-600"
+                          value="${cat.id}"
+                          ${checked ? "checked" : ""}
+                        />
+                        <span>${cat.title}</span>
+                      </label>
+                    `;
+                  })
+                  .join("")}
+              </div>
+            </div>
+
+            <!-- Tone -->
+            <div>
+              <label for="invToneSelect" class="block text-xs font-bold text-slate-700 mb-1">ຮູບແບບການທ້ວງ</label>
+              <select
+                id="invToneSelect"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500"
+              >
+                <option value="polite" ${invoiceState.tone === "polite" ? "selected" : ""}>ສຸພາບ / ເປັນທາງການ (ໃບທ້ວງໜີ້)</option>
+                <option value="friendly" ${invoiceState.tone === "friendly" ? "selected" : ""}>ກັນເອງ / ສະບາຍດີ</option>
+                <option value="urgent" ${invoiceState.tone === "urgent" ? "selected" : ""}>ແຈ້ງເຕືອນດ່ວນ (ຄົບ/ເກີນກຳນົດ)</option>
+              </select>
+            </div>
+
+            <!-- Sender & Payment Info -->
+            <div>
+              <label for="invSenderInput" class="block text-xs font-bold text-slate-700 mb-1">ຊື່ຜູ້ສົ່ງ / ຮ້ານ</label>
+              <input
+                type="text"
+                id="invSenderInput"
+                value="${escapeHTML(invoiceState.senderName)}"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label for="invPaymentInput" class="block text-xs font-bold text-slate-700 mb-1">ຊ່ອງທາງຊຳລະເງິນ</label>
+              <input
+                type="text"
+                id="invPaymentInput"
+                value="${escapeHTML(invoiceState.paymentInfo)}"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label for="invNoteInput" class="block text-xs font-bold text-slate-700 mb-1">ຂໍ້ຄວາມປິດທ້າຍໃບທ້ວງໜີ້</label>
+              <textarea
+                id="invNoteInput"
+                rows="2"
+                class="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm focus:outline-none focus:border-amber-500"
+              >${escapeHTML(invoiceState.customNote)}</textarea>
+            </div>
+          </section>
+
+          <!-- Right Column: Live Slip Preview & Copy/Print Actions -->
+          <section class="lg:col-span-6 space-y-4">
+            <div id="printSlipArea" class="bg-white border-2 border-slate-200 rounded-3xl p-5 sm:p-6 shadow-md">
+              <div class="flex items-start justify-between gap-3 pb-4 border-b border-dashed border-slate-300">
+                <div>
+                  <div class="text-xs font-extrabold uppercase tracking-wider text-amber-700">
+                    ${
+                      invoiceState.tone === "urgent"
+                        ? "🚨 ແຈ້ງເຕືອນດ່ວນ"
+                        : invoiceState.tone === "friendly"
+                        ? "😊 ແຈ້ງຍອດຄ້າງ"
+                        : "🧾 ໃບທ້ວງໜີ້ຢ່າງເປັນທາງການ"
+                    }
+                  </div>
+                  <h3 class="text-xl font-extrabold text-slate-900 mt-0.5">
+                    ${invoiceState.selectedCustomer === "ALL_UNPAID" ? "ລວມລາຍການຍັງຄ້າງ" : `ລູກຄ້າ: ${escapeHTML(invoiceState.selectedCustomer)}`}
+                  </h3>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    ຜູ້ອອກໃບທ້ວງ: <strong class="text-slate-700">${escapeHTML(invoiceState.senderName || "ຜູ້ບໍລິການ")}</strong> • ວັນທີ ${formatDisplayDate(getTodayDateStr(0))}
+                  </p>
+                </div>
+                <div class="text-right bg-rose-50 border border-rose-200 rounded-2xl px-3.5 py-2 shrink-0">
+                  <div class="text-[11px] font-bold text-rose-700">ຍອດລວມທວງ</div>
+                  <div class="text-lg sm:text-xl font-extrabold text-rose-600">${formatLAK(totalAmount)}</div>
+                </div>
+              </div>
+
+              <div class="my-4 space-y-2.5">
+                ${
+                  matchedItems.length === 0
+                    ? `<div class="text-center py-8 text-sm font-semibold text-slate-400">ບໍ່ມີລາຍການຄ້າງຊຳລະຕາມຕົວກອງທີ່ເລືອກ</div>`
+                    : matchedItems
+                        .map((item, index) => {
+                          const catTitle = MENU_CONFIG[item.category]?.title || item.category;
+                          const rem = getRemaining(item);
+                          const st = evaluateReminderStatus(item);
+                          return `
+                            <div class="rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 flex items-start justify-between gap-3">
+                              <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                  <span class="text-xs font-extrabold text-slate-800">${index + 1}. ${escapeHTML(item.customer)}</span>
+                                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">${escapeHTML(catTitle)}</span>
+                                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border ${st.badgeClass}">${st.badgeText}</span>
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1">
+                                  ວັນທີ ${formatDisplayDate(item.date)} ${escapeHTML(item.time || "")}
+                                  ${item.detail ? ` • ${escapeHTML(item.detail)}` : ""}
+                                  ${item.extra ? ` (${escapeHTML(item.extra)})` : ""}
+                                </div>
+                              </div>
+                              <div class="text-sm sm:text-base font-extrabold text-rose-600 shrink-0">${formatLAK(rem)}</div>
+                            </div>
+                          `;
+                        })
+                        .join("")
+                }
+              </div>
+
+              <div class="pt-3 border-t border-dashed border-slate-300 space-y-1.5 text-xs text-slate-600">
+                ${
+                  invoiceState.paymentInfo
+                    ? `<div><strong class="text-slate-800">ຊ່ອງທາງຊຳລະ:</strong> ${escapeHTML(invoiceState.paymentInfo)}</div>`
+                    : ""
+                }
+                ${
+                  invoiceState.customNote
+                    ? `<div class="rounded-xl bg-amber-50/80 border border-amber-200/80 p-2.5 text-amber-950 font-medium">${escapeHTML(invoiceState.customNote)}</div>`
+                    : ""
+                }
+              </div>
+            </div>
+
+            <!-- Action Buttons for Slip -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                id="btnCopyInvoiceText"
+                class="w-full py-3 px-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm shadow transition cursor-pointer"
+              >
+                📋 ກັອບປີ້ຂໍ້ຄວາມໃບທ້ວງໜີ້
+              </button>
+              <button
+                type="button"
+                id="btnPrintInvoice"
+                class="w-full py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm shadow transition cursor-pointer"
+              >
+                🖨️ ພິມ / ບັນທຶກເປັນ PDF
+              </button>
+            </div>
+
+            <!-- Plain text preview box for easy inspection -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4">
+              <div class="text-xs font-bold text-slate-500 mb-1.5">ຂໍ້ຄວາມສຳລັບສົ່ງ WhatsApp / Messenger / SMS:</div>
+              <pre class="text-xs text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-200/70 max-h-48 overflow-y-auto">${escapeHTML(plainText)}</pre>
+            </div>
+          </section>
+        </div>
+      `;
+
+      // Bind invoice inputs
+      document.getElementById("invCustomerSelect").addEventListener("change", e => {
+        invoiceState.selectedCustomer = e.target.value;
+        saveInvoicePref();
+        renderInvoiceBuilder();
+      });
+
+      document.querySelectorAll(".inv-cat-checkbox").forEach(cb => {
+        cb.addEventListener("change", () => {
+          const checked = Array.from(document.querySelectorAll(".inv-cat-checkbox:checked")).map(el => el.value);
+          invoiceState.selectedCategories = checked;
+          saveInvoicePref();
+          renderInvoiceBuilder();
+        });
+      });
+
+      document.getElementById("invToneSelect").addEventListener("change", e => {
+        invoiceState.tone = e.target.value;
+        saveInvoicePref();
+        renderInvoiceBuilder();
+      });
+
+      document.getElementById("invSenderInput").addEventListener("input", e => {
+        invoiceState.senderName = e.target.value;
+        saveInvoicePref();
+      });
+
+      document.getElementById("invPaymentInput").addEventListener("input", e => {
+        invoiceState.paymentInfo = e.target.value;
+        saveInvoicePref();
+      });
+
+      document.getElementById("invNoteInput").addEventListener("input", e => {
+        invoiceState.customNote = e.target.value;
+        saveInvoicePref();
+      });
+
+      document.getElementById("btnCopyInvoiceText").addEventListener("click", () => {
+        const latestText = generateInvoicePlainText(buildInvoiceItems());
+        const ta = document.createElement("textarea");
+        ta.value = latestText;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+
+        let ok = false;
+        try {
+          ok = document.execCommand("copy");
+        } catch {
+          ok = false;
+        }
+        document.body.removeChild(ta);
+
+        if (ok) {
+          showToast("ກັອບປີ້ຂໍ້ຄວາມໃບທ້ວງໜີ້ແລ້ວ! ວາງສົ່ງໄດ້ເລີຍ", "success");
+        } else {
+          showToast("ບໍ່ສາມາດກັອບປີ້ອັດຕະໂນມັດໄດ້ໃນອຸປະກອນນີ້", "error");
+        }
+      });
+
+      document.getElementById("btnPrintInvoice").addEventListener("click", () => {
+        window.print();
+      });
+    }
+
+    // =========================================================================
+    // 9. BACKUP, IMPORT, SAMPLE DATA & CLEANUP
+    // =========================================================================
+    document.getElementById("btnLoadSamples").addEventListener("click", () => {
+      entries = createSampleEntries();
+      saveEntries();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast("ໂຫຼດຂໍ້ມູນຕົວຢ່າງທັງ 4 ໝວດຄືນແລ້ວ", "success");
+    });
+
+    document.getElementById("btnExportJson").addEventListener("click", () => {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        entries
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lao-debt-manager-${getTodayDateStr(0)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("ສຳຮອງຂໍ້ມູນເປັນໄຟລ໌ JSON ສຳເລັດແລ້ວ", "success");
+    });
+
+    const importJsonInput = document.getElementById("importJsonInput");
+    document.getElementById("btnImportJsonTrigger").addEventListener("click", () => {
+      importJsonInput.click();
+    });
+
+    importJsonInput.addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed.entries) ? parsed.entries : null;
+          if (!list) throw new Error("Invalid JSON structure");
+          entries = list;
+          saveEntries();
+          refreshHeaderAndMenuBadges();
+          renderWorkspace();
+          showToast(`ນຳເຂົ້າຂໍ້ມູນ ${entries.length} ລາຍການສຳເລັດແລ້ວ`, "success");
+        } catch {
+          showToast("ໄຟລ໌ JSON ບໍ່ຖືກຕ້ອງ", "error");
+        }
+      };
+      reader.readAsText(file);
+      importJsonInput.value = "";
+    });
+
+    document.getElementById("btnClearSettled").addEventListener("click", () => {
+      const before = entries.length;
+      entries = entries.filter(item => !item.paid && getRemaining(item) > 0);
+      const removed = before - entries.length;
+      if (removed === 0) {
+        showToast("ບໍ່ມີລາຍການທີ່ຈ່າຍໝົດແລ້ວໃຫ້ລ້າງ", "info");
+        return;
+      }
+      saveEntries();
+      refreshHeaderAndMenuBadges();
+      renderWorkspace();
+      showToast(`ລ້າງລາຍການທີ່ຈ່າຍໝົດແລ້ວ ${removed} ລາຍການ`, "success");
+    });
+
+    // =========================================================================
+    // 10. INITIALIZATION
+    // =========================================================================
+    refreshHeaderAndMenuBadges();
+    renderWorkspace();
+  </script>
+</body>
+</html>
+```
